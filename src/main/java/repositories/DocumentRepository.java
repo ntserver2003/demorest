@@ -3,15 +3,21 @@ package repositories;
 import models.Document;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
-import org.hibernate.query.Query;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.stereotype.Component;
 
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Root;
+import javax.persistence.*;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 
+@EnableJpaRepositories
+@Component
 public class DocumentRepository {
+
+    @Autowired
+    private DocumentCrud documentCrud;
+    @Autowired
+    private EntityManager entityManager;
 
     public static Document addDocument(String description )
     {
@@ -34,6 +40,14 @@ public class DocumentRepository {
         }
 
     }
+    public boolean deleteDocument(Long id)
+    {
+        if(documentCrud.existsById(id)) {
+            documentCrud.deleteById(id);
+            return true;
+        }
+        return false;
+    }
     public static Document getDocument(Long id)
     {
         Session session = main.Application.getFactory().openSession();
@@ -54,13 +68,22 @@ public class DocumentRepository {
         Session session = main.Application.getFactory().openSession();
         searchValue = "%"+searchValue+"%";
         Query query = session.createQuery("from Document where description like :searchValue");
+
         try {
             query.setParameter("searchValue", searchValue);
-            List list = query.list();
+            List list = query.getResultList();
             return (List<Document>) list;
         }
         finally {
         session.close();
         }
+    }
+
+    public List<Document> listTopDocuments(int top)
+    {
+        Query q = entityManager.createNamedQuery("selectDocuments")
+                .setMaxResults(top);
+        List d = q.getResultList();
+        return (List<Document>)d;
     }
 }

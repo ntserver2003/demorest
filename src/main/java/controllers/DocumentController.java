@@ -1,6 +1,7 @@
 package controllers;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import models.Document;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import repositories.DocumentRepository;
 
@@ -9,6 +10,8 @@ import java.util.concurrent.atomic.AtomicLong;
 
 @RestController
 public class DocumentController {
+    @Autowired
+    private repositories.DocumentRepository documentRepository;
     private final AtomicLong _id = new AtomicLong();
     @RequestMapping(value = "/documents/new", method = RequestMethod.GET, produces = "application/json")
     public String newDocument(@RequestParam(value = "description") String description) throws Exception
@@ -31,10 +34,25 @@ public class DocumentController {
         return DocumentRepository.getDocument(id);
     }
 
+    @RequestMapping(value = "/documents/{id}/delete", method = RequestMethod.GET, produces = "application/json")
+    public String deleteDocument(@PathVariable("id") Long id) throws Exception
+    {
+        ObjectMapper mapper = new ObjectMapper();
+        if(documentRepository.deleteDocument(id))
+        {
+            return mapper.writeValueAsString("OK");
+        }
+        return mapper.writeValueAsString("Id not found");
+    }
     @RequestMapping(value = "/documents/search/{searchType}", method = RequestMethod.GET, produces = "application/json")
     public List<Document> searchDocuments(@PathVariable("searchType") String searchType
             ,@RequestParam(value = "value") String searchValue)
     {
         return DocumentRepository.searchDocuments(searchType, searchValue);
+    }
+    @RequestMapping(value = "/documents/top", method = RequestMethod.GET, produces = "application/json")
+    public List<Document> searchDocuments(@RequestParam(value = "num") int top)
+    {
+        return documentRepository.listTopDocuments(top);
     }
 }

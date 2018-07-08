@@ -1,11 +1,15 @@
 package models;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
-
 import javax.persistence.*;
+
 
 @Entity
 @Table(name= "documents")
+@NamedNativeQueries({
+        @NamedNativeQuery(name = "selectDocuments"
+                , query = "SELECT * FROM Documents"
+                , resultClass = Document.class)
+})
 public class Document {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -26,6 +30,7 @@ public class Document {
         return _id;
     }
     public void setId(Integer id) { _id = id;}
+
     @JsonProperty("descr")
     public String getDescription()
     {
