@@ -1,109 +1,85 @@
 package util;
 
 import com.fasterxml.jackson.annotation.*;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.*;
+import org.springframework.http.HttpStatus;
+
 import java.io.Serializable;
 
 @JsonInclude(value = JsonInclude.Include.NON_DEFAULT)
-class ServiceError {
-    @JsonProperty("message")
-    private String _message;
-    @JsonProperty("exception")
-    private Exception _exception;
-
-    public String get_message() {
-        if (_message != null) {
-            return _message;
-        }
-        if(_exception != null) {
-            return _exception.getMessage();
-        }
-        return null;
-    }
-
-    public void set_message(String _message) {
-        this._message = _message;
-    }
-
-    public void set_exception(Exception _exception) {
-        this._exception = _exception;
-    }
-}
-
-@JsonInclude(value = JsonInclude.Include.NON_DEFAULT)
-public class ServiceResponse<T> implements Serializable{
+public class ServiceResponse<T> implements Serializable {
     @JsonProperty("result")
     private T _result;
+
+    public T getResult() {
+        return _result;
+    }
+
+    public void setResult(T result) {
+        this._result = result;
+        this._httpStatus = HttpStatus.OK;
+    }
 
     @JsonProperty("error")
     private ServiceError _error;
 
-    private static ObjectWriter _writer;
-    public static ObjectWriter getWriter() {
-        if (_writer == null) {
-            _writer = new ObjectMapper().writer();
-        }
-        return _writer;
+    public void setError(String msg) {
+        setError(msg, null);
     }
 
-    public ServiceResponse SetError(String msg) {
-        SetError(msg, null);
-        return this;
+    public void setError(Exception ex) {
+        setError(null, ex);
     }
-    public ServiceResponse SetError(Exception ex) {
-        SetError(null, ex);
-        return this;
-    }
-    public ServiceResponse SetError(String message, Exception ex)
-    {
+
+    private void setError(String message, Exception ex) {
         // Ничего не передали - выходим
-        if ((message == null || message.isEmpty()) && ex == null) return this;
+        if ((message == null || message.isEmpty()) && ex == null) return;
         // Объекта ServiceError нет - создадим
-        if(this._error == null) {
+        if (this._error == null) {
             this._error = new ServiceError();
         }
         // Есть сообщение
-        if(message != null && !message.isEmpty())
-        {
-            this._error.set_message(message);
+        if (message != null && !message.isEmpty()) {
+            this._error.setMessage(message);
         } else // сообщение пустое - берем из Exception
         {
-            this._error.set_message(ex.getMessage());
+            this._error.setMessage(ex.getMessage());
         }
-        if(ex != null)
-        {
-            this._error.set_exception(ex);
+        if (ex != null) {
+            this._error.setException(ex);
         }
-        return this;
+        this.setHttpStatus(HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
-    public ServiceResponse(T result)
-    {
-        this._result = result;
+    @JsonIgnore
+    private HttpStatus _httpStatus;
+
+    @JsonIgnore
+    public HttpStatus getHttpStatus() {
+        return _httpStatus;
     }
+
+    public void setHttpStatus(HttpStatus _httpStatus) {
+        this._httpStatus = _httpStatus;
+    }
+
     public ServiceResponse(){}
-    public static String Serialize(Object result) throws JsonProcessingException
+    private static ObjectWriter _writer;
+    public String Serialize()
     {
-        return new ServiceResponse<>(result).Serialize();
-    }
-
-    public String Serialize() throws JsonProcessingException
-    {
+        if (_writer == null)
+        {
+            _writer = new ObjectMapper().writer();
+        }
         try {
-            return getWriter().writeValueAsString(this);
+            return _writer.writeValueAsString(this);
         } catch (Exception ex) {
+
             ServiceError se = new ServiceError();
-            se.set_message("Unable serialize ServiceResponse");
-            se.set_exception(ex);
-            return getWriter().writeValueAsString(ex);
+            se.setMessage("Unable serialize ServiceResponse");
+            se.setException(ex);
+            return se.getMessage() + ":" + se.getException();
         }
     }
-    public T get_result() {
-        return _result;
-    }
-    public void set_result(T result)
-    {
-        this._result = result;
-    }
+
 }

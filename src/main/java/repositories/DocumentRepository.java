@@ -2,14 +2,13 @@ package repositories;
 
 import models.Document;
 import models.DocumentSql;
-import org.hibernate.Session;
-import org.hibernate.Transaction;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.stereotype.Component;
 
 import javax.persistence.*;
 import java.util.List;
+import java.util.Optional;
 
 @EnableJpaRepositories
 @Component
@@ -24,24 +23,15 @@ public class DocumentRepository {
         this._manager = entityManager;
     }
 
-    public static Document addDocument(String description) {
-        Session session = main.Application.getFactory().openSession();
-        Transaction tx = null;
-        Long docId = null;
-        try {
-            Document d = new Document();
-            d.setDescription(description);
-            tx = session.beginTransaction();
-            docId = (Long) session.save(d);
-            tx.commit();
-            return d;
-        } catch (Exception e) {
-            if (tx != null) tx.rollback();
-            return null;
-        } finally {
-            session.close();
-        }
-
+    public Document addDocument(String description) {
+        StoredProcedureQuery query = _manager.createStoredProcedureQuery("sp_InsertDocument");
+        query.registerStoredProcedureParameter("description", String.class, ParameterMode.IN);
+        query.setParameter("description", description);
+        query.registerStoredProcedureParameter("id", Long.class, ParameterMode.OUT);
+        query.execute();
+        Document d = new Document((Long) query.getOutputParameterValue("id")
+                , description);
+        return d;
     }
 
     public boolean deleteDocument(Long id) {
@@ -52,14 +42,9 @@ public class DocumentRepository {
         return false;
     }
 
-    public static Document getDocument(Long id) {
-        Session session = main.Application.getFactory().openSession();
-        try {
-            Document d = session.get(Document.class, id);
-            return d;
-        } finally {
-            session.close();
-        }
+    public Document getDocument(Long id) {
+        Optional<Document> document = _crud.findById(id);
+        return document.orElse(null);
     }
 
     public List<Document> searchDocuments(String searchType, String searchValue) {
@@ -79,16 +64,13 @@ public class DocumentRepository {
                 throw new IllegalArgumentException("Invalid search type");
         }
 
-        if (searchType.compareToIgnoreCase("like") == 0) {
-            searchValue = "%" + searchValue + "%";
-        }
         String sql = String.format(DocumentSql.SEARCH, searchType);
 
-        Query query = _manager.createNativeQuery(sql);
+        Query query = _manager.createNativeQuery(sql, Document.class);
 
         query.setParameter("searchValue", searchValue);
         List list = query.getResultList();
-        return (List<Document>) list;
+        return list;
     }
 
     public List<Document> listTopDocuments(int top) {
