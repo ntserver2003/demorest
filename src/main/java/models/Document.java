@@ -1,13 +1,13 @@
 package models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-
 import javax.persistence.*;
 import java.io.Serializable;
+import static models.DocumentSql.NAMED_SELECT_ALL;
 
 @Entity
 @NamedNativeQueries({
-        @NamedNativeQuery(name = "Documents.SelectAll"
+        @NamedNativeQuery(name = NAMED_SELECT_ALL
                 , query = "SELECT * FROM Documents"
                 , resultClass = Document.class)
 })

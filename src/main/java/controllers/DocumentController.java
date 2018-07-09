@@ -9,8 +9,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import repositories.DocumentRepository;
 import util.ServiceResponse;
-
+import static util.ServiceInfo.SERVICE_ROOT;
 import java.util.List;
+
+
 
 @RestController
 @RequestMapping(produces = "application/json")
@@ -22,7 +24,7 @@ public class DocumentController {
         this.documentRepository = documentRepository;
     }
 
-    @RequestMapping(value = "/documents/new", method = RequestMethod.GET)
+    @RequestMapping(value = SERVICE_ROOT+"/documents/new", method = RequestMethod.GET)
     public String newDocument(@RequestParam(value = "description") String description) throws Exception {
         /*Document d  =new Document(_id.incrementAndGet(), description);
         ObjectMapper mapper = new ObjectMapper();
@@ -37,7 +39,7 @@ public class DocumentController {
         return mapper.writeValueAsString(d);
     }
 
-    @RequestMapping(value = "/documents/{id}", method = RequestMethod.GET)
+    @RequestMapping(value = SERVICE_ROOT+"/documents/{id}", method = RequestMethod.GET)
     public ServiceResponse getDocument(@PathVariable("id") Long id) {
         ServiceResponse response;
         try {
@@ -48,7 +50,7 @@ public class DocumentController {
         return response;
     }
 
-    @RequestMapping(value = "/documents/{id}/delete", method = RequestMethod.GET)
+    @RequestMapping(value = SERVICE_ROOT+"/documents/{id}/delete", method = RequestMethod.GET)
     @ResponseBody
     public ResponseEntity deleteDocument(@PathVariable("id") Long id) throws Exception {
         if (documentRepository.deleteDocument(id)) {
@@ -61,7 +63,7 @@ public class DocumentController {
                         )), HttpStatus.NOT_FOUND);
     }
 
-    @RequestMapping(value = "/documents/search/{searchType}", method = RequestMethod.GET)
+    @RequestMapping(value = SERVICE_ROOT+"/documents/search/{searchType}", method = RequestMethod.GET)
     public ResponseEntity searchDocuments(@PathVariable("searchType") String searchType
             , @RequestParam(value = "value") String searchValue) {
         HttpStatus status;
@@ -84,7 +86,7 @@ public class DocumentController {
         return new ResponseEntity<>(response, status);
     }
 
-    @RequestMapping(value = "/documents/top", method = RequestMethod.GET)
+    @RequestMapping(value = SERVICE_ROOT+"/documents/top", method = RequestMethod.GET)
     public ResponseEntity topNDocuments(@RequestParam(value = "n", required = false) String top) throws JsonProcessingException {
         int topN;
         HttpStatus status;

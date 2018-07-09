@@ -1,6 +1,7 @@
 package repositories;
 
 import models.Document;
+import models.DocumentSql;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,7 +9,6 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.stereotype.Component;
 
 import javax.persistence.*;
-import javax.print.Doc;
 import java.util.List;
 
 @EnableJpaRepositories
@@ -82,8 +82,7 @@ public class DocumentRepository {
         if (searchType.compareToIgnoreCase("like") == 0) {
             searchValue = "%" + searchValue + "%";
         }
-        String sql = String.format("select * from dbo.Documents d where d.description %s :searchValue"
-                , searchType);
+        String sql = String.format(DocumentSql.SEARCH, searchType);
 
         Query query = _manager.createNativeQuery(sql);
 
@@ -93,7 +92,7 @@ public class DocumentRepository {
     }
 
     public List<Document> listTopDocuments(int top) {
-        Query q = _manager.createNamedQuery("Documents.SelectAll")
+        Query q = _manager.createNamedQuery(DocumentSql.NAMED_SELECT_ALL)
                 .setMaxResults(top);
         List d = q.getResultList();
         return (List<Document>) d;
